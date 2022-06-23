@@ -1,11 +1,13 @@
-import { errorHandler, NotFoundError } from "@anttix/common";
-import { json } from "body-parser";
-import cookieSession from "cookie-session";
-import express from "express";
-import "express-async-errors";
+import { currentUser, errorHandler, NotFoundError } from '@anttix/common';
+import { json } from 'body-parser';
+import cookieSession from 'cookie-session';
+import express from 'express';
+import 'express-async-errors';
+import { createTicketRouter } from './routes/new';
+import { showTicketRouter } from './routes/show';
 
 const app = express();
-app.set("trust proxy", true);
+app.set('trust proxy', true);
 app.use(json());
 app.use(
   cookieSession({
@@ -13,8 +15,12 @@ app.use(
     secure: process.env.NODE_ENV !== 'test',
   })
 );
+app.use(currentUser);
 
-app.all("*", async (req, res) => {
+app.use(createTicketRouter);
+app.use(showTicketRouter);
+
+app.all('*', async (req, res) => {
   throw new NotFoundError();
 });
 
