@@ -13,6 +13,8 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
+const EXPIRATION_WINDOW_SECONDS = 15 * 60;
+
 router.post(
 	'/api/orders',
 	requireAuth,
@@ -33,32 +35,28 @@ router.post(
 			throw new NotFoundError();
 		}
 
-		// Make sure that this is not already reserved
-		// Run the query and look up all orders. Find the order where the ticket
-		// is the ticket we just found *and* the orders status is *not* cancelled.
-		// If we find and order from that mean the ticket *is* reserved.
-		const existingOrder = await Order.findOne({
-			ticket: ticket,
-			status: {
-				$in: [
-					OrderStatus.Created,
-					OrderStatus.AwaitingPayment,
-					OrderStatus.Complete,
-				],
-			},
-		});
-
-		if (existingOrder) {
+		// Make sure that this ticket is not already reserved
+		const isReserved = await ticket.isReserved();
+		if (isReserved) {
 			throw new BadRequestError('Ticket is already reserved');
 		}
 
-		// Calc an expiration date/time of the order
+		// Calculate an expiration date for this order
+		const expiration = new Date();
+		expiration.setSeconds(expiration.getSeconds() + EXPIRATION_WINDOW_SECONDS);
 
 		// Build the order and save it to the database
+		const order = Order.build({
+			userId: req.currentUser!.id,
+			status: OrderStatus.Created,
+			expiresAt: expiration,
+			ticket,
+		});
+		await order.save();
 
 		// Publish an event saying that an order was created
 
-		res.send({});
+		res.status(201).send(order);
 	}
 );
 
