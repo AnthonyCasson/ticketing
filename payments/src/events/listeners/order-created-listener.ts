@@ -2,7 +2,6 @@ import { Listener, OrderCreatedEvent, Subjects } from '@anttix/common';
 import { Message } from 'node-nats-streaming';
 import { Order } from '../../models/orders';
 import { queueGroupName } from './queue-group-name';
-
 export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   readonly subject = Subjects.OrderCreated;
   queueGroupName = queueGroupName;
@@ -15,7 +14,6 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
       userId: data.userId,
       version: data.version,
     });
-
     await order.save();
 
     msg.ack();
