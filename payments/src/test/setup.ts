@@ -8,6 +8,8 @@ declare global {
 
 jest.mock('../nats-wrapper');
 
+jest.mock('../stripe');
+
 let mongo: any;
 beforeAll(async () => {
   process.env.JWT_KEY = 'asdcscf';
